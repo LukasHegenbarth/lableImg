@@ -41,17 +41,8 @@ Linux/Ubuntu/Mac requires at least `Python
 
 Ubuntu Linux
 ^^^^^^^^^^^^
-Python 2 + Qt4
 
-.. code:: shell
-
-    sudo apt-get install pyqt4-dev-tools
-    sudo pip install lxml
-    make qt4py2
-    python labelImg.py
-    python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-
-Python 3 + Qt5 (Recommended)
+Python 3 + Qt5
 
 .. code:: shell
 
@@ -63,17 +54,8 @@ Python 3 + Qt5 (Recommended)
 
 macOS
 ^^^^^
-Python 2 + Qt4
 
-.. code:: shell
-
-    brew install qt qt4
-    brew install libxml2
-    make qt4py2
-    python labelImg.py
-    python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-
-Python 3 + Qt5 (Recommended)
+Python 3 + Qt5
 
 .. code:: shell
 
@@ -97,7 +79,7 @@ Virtualenv can avoid a lot of the QT / Python version issues
 
     brew install python3
     pip3 install pipenv
-    pipenv run pip install pyqt5==5.13.2 lxml
+    pipenv run pip install pyqt5==5.12.1 lxml
     pipenv run make qt5py3
     python3 labelImg.py
     [Optional] rm -rf build dist; python setup.py py2app -A;mv "dist/labelImg.app" /Applications
@@ -116,9 +98,9 @@ Open cmd and go to the `labelImg <#labelimg>`__ directory
 
 .. code:: shell
 
-    pyrcc4 -o line/resources.py resources.qrc
+    pyrcc4 -o lib/resources.py resources.qrc
     For pyqt5, pyrcc5 -o libs/resources.py resources.qrc
-    
+
     python labelImg.py
     python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
 
@@ -132,12 +114,15 @@ Open the Anaconda Prompt and go to the `labelImg <#labelimg>`__ directory
 .. code:: shell
 
     conda install pyqt=5
+    conda install -c anaconda lxml
     pyrcc5 -o libs/resources.py resources.qrc
     python labelImg.py
     python labelImg.py [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
 
 Get from PyPI but only python3.0 or above
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This is the simplest (one-command) install method on modern Linux distributions such as Ubuntu and Fedora.
+
 .. code:: shell
 
     pip3 install labelImg
@@ -215,31 +200,33 @@ to load pre-defined classes
 Hotkeys
 ~~~~~~~
 
-+------------+--------------------------------------------+
-| Ctrl + u   | Load all of the images from a directory    |
-+------------+--------------------------------------------+
-| Ctrl + r   | Change the default annotation target dir   |
-+------------+--------------------------------------------+
-| Ctrl + s   | Save                                       |
-+------------+--------------------------------------------+
-| Ctrl + d   | Copy the current label and rect box        |
-+------------+--------------------------------------------+
-| Space      | Flag the current image as verified         |
-+------------+--------------------------------------------+
-| w          | Create a rect box                          |
-+------------+--------------------------------------------+
-| d          | Next image                                 |
-+------------+--------------------------------------------+
-| a          | Previous image                             |
-+------------+--------------------------------------------+
-| del        | Delete the selected rect box               |
-+------------+--------------------------------------------+
-| Ctrl++     | Zoom in                                    |
-+------------+--------------------------------------------+
-| Ctrl--     | Zoom out                                   |
-+------------+--------------------------------------------+
-| ↑→↓←       | Keyboard arrows to move selected rect box  |
-+------------+--------------------------------------------+
++--------------------+--------------------------------------------+
+| Ctrl + u           | Load all of the images from a directory    |
++--------------------+--------------------------------------------+
+| Ctrl + r           | Change the default annotation target dir   |
++--------------------+--------------------------------------------+
+| Ctrl + s           | Save                                       |
++--------------------+--------------------------------------------+
+| Ctrl + d           | Copy the current label and rect box        |
++--------------------+--------------------------------------------+
+| Ctrl + Shift + d   | Delete the current image                   |
++--------------------+--------------------------------------------+
+| Space              | Flag the current image as verified         |
++--------------------+--------------------------------------------+
+| w                  | Create a rect box                          |
++--------------------+--------------------------------------------+
+| d                  | Next image                                 |
++--------------------+--------------------------------------------+
+| a                  | Previous image                             |
++--------------------+--------------------------------------------+
+| del                | Delete the selected rect box               |
++--------------------+--------------------------------------------+
+| Ctrl++             | Zoom in                                    |
++--------------------+--------------------------------------------+
+| Ctrl--             | Zoom out                                   |
++--------------------+--------------------------------------------+
+| ↑→↓←             |  Keyboard arrows to move selected rect box   |
++--------------------+--------------------------------------------+
 
 **Verify Image:**
 
@@ -250,6 +237,16 @@ This is used when creating a dataset automatically, the user can then through al
 
 The difficult field is set to 1 indicates that the object has been annotated as "difficult", for example, an object which is clearly visible but difficult to recognize without substantial use of context.
 According to your deep neural network implementation, you can include or exclude difficult objects during training.
+
+How to reset the settings
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In case there are issues with loading the classes, you can either:
+
+1. From the top menu of the labelimg click on Menu/File/Reset All
+2. Remove the `.labelImgSettings.pkl` from your home directory. In Linux and Mac you can do:
+    `rm ~/.labelImgSettings.pkl`
+
 
 How to contribute
 ~~~~~~~~~~~~~~~~~
@@ -272,4 +269,10 @@ Related
 4. `App Icon based on Icon by Nick Roach (GPL) <https://www.elegantthemes.com/>`__
 5. `Setup python development in vscode <https://tzutalin.blogspot.com/2019/04/set-up-visual-studio-code-for-python-in.html>`__
 6. `The link of this project on iHub platform <https://code.ihub.org.cn/projects/260/repository/labelImg>`__
+
+
+Stargazers over time
+~~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://starchart.cc/tzutalin/labelImg.svg
 
