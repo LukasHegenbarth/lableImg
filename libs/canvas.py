@@ -63,6 +63,9 @@ class Canvas(QWidget):
         self.verified = False
         self.drawSquare = False
 
+        #initialisation for panning
+        self.pan_initial_pos = QPoint()
+
     def setDrawingColor(self, qColor):
         self.drawingLineColor = qColor
         self.drawingRectColor = qColor
@@ -115,11 +118,21 @@ class Canvas(QWidget):
         if self.drawing():
             self.overrideCursor(CURSOR_DRAW)
             if self.current:
+                # Display annotation width and height while drawing
+                currentWidth = abs(self.current[0].x() - pos.x())
+                currentHeight = abs(self.current[0].y() - pos.y())
+                self.parent().window().labelCoordinates.setText(
+                        'Width: %d, Height: %d / X: %d; Y: %d' % (currentWidth, currentHeight, pos.x(), pos.y()))
+
                 color = self.drawingLineColor
                 if self.outOfPixmap(pos):
                     # Don't allow the user to draw outside the pixmap.
-                    # Project the point to the pixmap's edges.
-                    pos = self.intersectionPoint(self.current[-1], pos)
+                    # Clip the coordinates to 0 or max,
+                    # if they are outside the range [0, max]
+                    size = self.pixmap.size()
+                    clipped_x = min(max(0, pos.x()), size.width())
+                    clipped_y = min(max(0, pos.y()), size.height())
+                    pos = QPointF(clipped_x, clipped_y)
                 elif len(self.current) > 1 and self.closeEnough(pos, self.current[0]):
                     # Attract line to starting point and colorise to alert the
                     # user:
@@ -169,6 +182,13 @@ class Canvas(QWidget):
                 self.boundedMoveShape(self.selectedShape, pos)
                 self.shapeMoved.emit()
                 self.repaint()
+            else:
+                #pan
+                delta_x = pos.x() - self.pan_initial_pos.x()
+                delta_y = pos.y() - self.pan_initial_pos.y()
+                self.scrollRequest.emit(delta_x, Qt.Horizontal)
+                self.scrollRequest.emit(delta_y, Qt.Vertical)
+                self.update()
             return
 
         # Just hovering over the canvas, 2 posibilities:
@@ -214,13 +234,18 @@ class Canvas(QWidget):
             if self.drawing():
                 self.handleDrawing(pos)
             else:
-                self.selectShapePoint(pos)
+                selection = self.selectShapePoint(pos)
                 self.prevPoint = pos
-                self.repaint()
+
+                if selection is None:
+                    #pan
+                    QApplication.setOverrideCursor(QCursor(Qt.OpenHandCursor))
+                    self.pan_initial_pos = pos
+
         elif ev.button() == Qt.RightButton and self.editing():
             self.selectShapePoint(pos)
             self.prevPoint = pos
-            self.repaint()
+        self.update()
 
     def mouseReleaseEvent(self, ev):
         if ev.button() == Qt.RightButton:
@@ -240,6 +265,9 @@ class Canvas(QWidget):
             pos = self.transformPos(ev.pos())
             if self.drawing():
                 self.handleDrawing(pos)
+            else:
+                #pan
+                QApplication.restoreOverrideCursor()
 
     def endMove(self, copy=False):
         assert self.selectedShape and self.selectedShapeCopy
@@ -311,12 +339,13 @@ class Canvas(QWidget):
             index, shape = self.hVertex, self.hShape
             shape.highlightVertex(index, shape.MOVE_VERTEX)
             self.selectShape(shape)
-            return
+            return self.hVertex
         for shape in reversed(self.shapes):
             if self.isVisible(shape) and shape.containsPoint(point):
                 self.selectShape(shape)
                 self.calculateOffsets(shape, point)
-                return
+                return self.selectedShape
+        return None
 
     def calculateOffsets(self, shape, point):
         rect = shape.boundingRect()
@@ -344,7 +373,10 @@ class Canvas(QWidget):
         index, shape = self.hVertex, self.hShape
         point = shape[index]
         if self.outOfPixmap(pos):
-            pos = self.intersectionPoint(point, pos)
+            size = self.pixmap.size()
+            clipped_x = min(max(0, pos.x()), size.width())
+            clipped_y = min(max(0, pos.y()), size.height())
+            pos = QPointF(clipped_x, clipped_y)
 
         if self.drawSquare:
             opposite_point_index = (index + 2) % 4
@@ -521,58 +553,6 @@ class Canvas(QWidget):
         #m = (p1-p2).manhattanLength()
         # print "d %.2f, m %d, %.2f" % (d, m, d - m)
         return distance(p1 - p2) < self.epsilon
-
-    def intersectionPoint(self, p1, p2):
-        # Cycle through each image edge in clockwise fashion,
-        # and find the one intersecting the current line segment.
-        # http://paulbourke.net/geometry/lineline2d/
-        size = self.pixmap.size()
-        points = [(0, 0),
-                  (size.width(), 0),
-                  (size.width(), size.height()),
-                  (0, size.height())]
-        x1, y1 = p1.x(), p1.y()
-        x2, y2 = p2.x(), p2.y()
-        d, i, (x, y) = min(self.intersectingEdges((x1, y1), (x2, y2), points))
-        x3, y3 = points[i]
-        x4, y4 = points[(i + 1) % 4]
-        if (x, y) == (x1, y1):
-            # Handle cases where previous point is on one of the edges.
-            if x3 == x4:
-                return QPointF(x3, min(max(0, y2), max(y3, y4)))
-            else:  # y3 == y4
-                return QPointF(min(max(0, x2), max(x3, x4)), y3)
-
-        # Ensure the labels are within the bounds of the image. If not, fix them.
-        x, y, _ = self.snapPointToCanvas(x, y)
-
-        return QPointF(x, y)
-
-    def intersectingEdges(self, x1y1, x2y2, points):
-        """For each edge formed by `points', yield the intersection
-        with the line segment `(x1,y1) - (x2,y2)`, if it exists.
-        Also return the distance of `(x2,y2)' to the middle of the
-        edge along with its index, so that the one closest can be chosen."""
-        x1, y1 = x1y1
-        x2, y2 = x2y2
-        for i in range(4):
-            x3, y3 = points[i]
-            x4, y4 = points[(i + 1) % 4]
-            denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
-            nua = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)
-            nub = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
-            if denom == 0:
-                # This covers two cases:
-                #   nua == nub == 0: Coincident
-                #   otherwise: Parallel
-                continue
-            ua, ub = nua / denom, nub / denom
-            if 0 <= ua <= 1 and 0 <= ub <= 1:
-                x = x1 + ua * (x2 - x1)
-                y = y1 + ua * (y2 - y1)
-                m = QPointF((x3 + x4) / 2, (y3 + y4) / 2)
-                d = distance(m - QPointF(x2, y2))
-                yield d, i, (x, y)
 
     # These two, along with a call to adjustSize are required for the
     # scroll area.
