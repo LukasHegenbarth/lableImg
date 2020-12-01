@@ -65,6 +65,16 @@ class WindowMixin(object):
             addActions(toolbar, actions)
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
+    
+    def trainPipelineToolbar(self, title, actions=None):
+        trainPipelineToolbar = ToolBar(title)
+        trainPipelineToolbar.setObjectName(u'%sTrainPipelineToolbar' % title)
+        trainPipelineToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        if actions:
+            addActions(trainPipelineToolbar, actions)
+        self.addToolBar(Qt.RightToolBarArea, trainPipelineToolbar)
+        return trainPipelineToolbar
+
 
 
 class MainWindow(QMainWindow, WindowMixin):
@@ -133,12 +143,12 @@ class MainWindow(QMainWindow, WindowMixin):
         self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         #Add costum button
-        self.customButton = QPushButton('useCustom', self)
-        useCustomQHBoxLayout = QHBoxLayout()
-        self.customButton.clicked.connect(self.on_click)
-        useCustomQHBoxLayout.addWidget(self.customButton)
-        useCustomContainer = QWidget()
-        useCustomContainer.setLayout(useCustomQHBoxLayout)
+        # self.customButton = QPushButton('useCustom', self)
+        # useCustomQHBoxLayout = QHBoxLayout()
+        # self.customButton.clicked.connect(self.on_click)
+        # useCustomQHBoxLayout.addWidget(self.customButton)
+        # useCustomContainer = QWidget()
+        # useCustomContainer.setLayout(useCustomQHBoxLayout)
 
 
         # Add some of widgets to listLayout
@@ -214,10 +224,19 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dock.setFeatures(self.dock.features() ^ self.dockFeatures)
 
         #Custom button
-        listLayout.addWidget(self.customButton)
+        # listLayout.addWidget(self.customButton)
 
         # Actions
         action = partial(newAction, self)
+        trainNeuralNet = action('Train Neural Network', self.on_click,
+                      'Ctrl+Shift+T', 'trainNeuralNet', 'trainNeuralNet')
+
+        predictLabels = action('Predict Labels', self.on_click,
+                      'Ctrl+Shift+P', 'predictLabels', 'predictLabels')
+
+        createTfRecord = action('Create TfRecord File', self.on_click, 
+                      'Crtl+Shift+C', 'createTfRecord', 'createTfRecord')
+
         quit = action(getStr('quit'), self.close,
                       'Ctrl+Q', 'quit', getStr('quitApp'))
 
@@ -355,7 +374,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, save, saveAs, close, resetAll, quit),
+                                  trainNeuralNet, predictLabels, createTfRecord, open, opendir, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1, self.drawSquaresOption),
@@ -392,7 +411,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.displayLabelOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (trainNeuralNet, predictLabels, createTfRecord, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -411,6 +430,9 @@ class MainWindow(QMainWindow, WindowMixin):
             action('&Copy here', self.copyShape),
             action('&Move here', self.moveShape)))
 
+        self.pipelineTools = self.trainPipelineToolbar('PipelineTools')
+        
+
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
             open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
@@ -420,6 +442,9 @@ class MainWindow(QMainWindow, WindowMixin):
             open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
+
+        self.actions.pipeline = (
+            trainNeuralNet, predictLabels, createTfRecord)
 
         self.statusBar().showMessage('%s started.' % __appname__)
         self.statusBar().show()
@@ -435,7 +460,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fit_window = False
         # Add Chris
         self.difficult = False
-        self.custom = False
+        # self.custom = False
 
         ## Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
         if settings.get(SETTING_RECENT_FILES):
@@ -469,7 +494,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.setDrawingColor(self.lineColor)
         # Add chris
         Shape.difficult = self.difficult
-        Shape.custom = self.custom
+        # Shape.custom = self.custom
 
         def xbool(x):
             if isinstance(x, QVariant):
@@ -551,6 +576,10 @@ class MainWindow(QMainWindow, WindowMixin):
             tool, menu = self.actions.beginner, self.actions.beginnerContext
         else:
             tool, menu = self.actions.advanced, self.actions.advancedContext
+
+        pipeline = self.actions.pipeline
+        self.pipelineTools.clear()
+        addActions(self.pipelineTools, pipeline)
         self.tools.clear()
         addActions(self.tools, tool)
         self.canvas.menus[0].clear()
