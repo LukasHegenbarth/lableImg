@@ -11,9 +11,10 @@ class stackedExample(QWidget):
     #   self.leftlist.insertItem (0, 'Contact' )
     #   self.leftlist.insertItem (1, 'Personal' )
     #   self.leftlist.insertItem (2, 'Educational' )
-      self.button1 = QPushButton('Button 1')
-      self.button2 = QPushButton('Button 2')
-      self.button3 = QPushButton('Button 3')
+      self.button1 = QPushButton('Data \n Labeling')
+      self.button1.setStyleSheet("background-color: #003c8f")
+      self.button2 = QPushButton('Neural Network \n Training')
+      self.button3 = QPushButton('Third Page \n')
 		
       self.stack1 = QWidget()
       self.stack2 = QWidget()
@@ -42,7 +43,6 @@ class stackedExample(QWidget):
       self.button3.clicked.connect(self.button3_fcn)
       self.setGeometry(300, 50, 10,10)
       self.setWindowTitle('StackedWidget demo')
-      self.show()
 		
    def stack1UI(self):
       layout = QFormLayout()
@@ -73,16 +73,26 @@ class stackedExample(QWidget):
     
    def button1_fcn(self):
       self.Stack.setCurrentIndex(0)
+      self.button1.setStyleSheet("background-color: #003c8f");
+      self.button2.setStyleSheet("background-color: #eeeeee");
+      self.button3.setStyleSheet("background-color: #eeeeee");
    
    def button2_fcn(self):
       self.Stack.setCurrentIndex(1)
+      self.button1.setStyleSheet("background-color: #eeeeee");
+      self.button2.setStyleSheet("background-color: #003c8f");
+      self.button3.setStyleSheet("background-color: #eeeeee");
 
    def button3_fcn(self):
       self.Stack.setCurrentIndex(2)
+      self.button1.setStyleSheet("background-color: #eeeeee");
+      self.button2.setStyleSheet("background-color: #eeeeee");
+      self.button3.setStyleSheet("background-color: #003c8f");
 		
 def main():
    app = QApplication(sys.argv)
    ex = stackedExample()
+   ex.show()
    sys.exit(app.exec_())
 	
 if __name__ == '__main__':
