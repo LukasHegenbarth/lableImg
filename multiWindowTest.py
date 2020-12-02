@@ -53,22 +53,26 @@ class stackedWindow(QWidget):
         self.stack1.setLayout(layout)
 
     def stack2UI(self):
-        layout = QFormLayout()
-        sex = QHBoxLayout()
-        sex.addWidget(QRadioButton("Male"))
-        sex.addWidget(QRadioButton("Female"))
-        layout.addRow(QLabel("Sex"), sex)
-        layout.addRow("Date of Birth", QLineEdit())
-
-        self.stack2.setLayout(layout)
-
-    def stack3UI(self):
+        hbox = QHBoxLayout(self)
+        #TODO add param list for training config 
         vbox = QVBoxLayout(self)
+        self.trainingButton = QPushButton('start Training')
+        self.trainingStatus = QLabel('Training Status')
+        self.trainingStatus.setMaximumWidth(250)
+        vbox.addWidget(self.trainingButton)
+        vbox.addWidget(self.trainingStatus)
+        vbox.setAlignment(Qt.AlignTop)
         self.webEngineView = QWebEngineView()
         self.loadPage()
-        vbox.addWidget(self.webEngineView)
+        hbox.addLayout(vbox)
+        hbox.addWidget(self.webEngineView)
+        self.stack2.setLayout(hbox)
 
-        self.stack3.setLayout(vbox)
+    def stack3UI(self):
+        layout = QFormLayout()
+        label = QLabel('This page shows nothing yet')
+        layout.addWidget(label)
+        self.stack3.setLayout(layout)
 
     def loadPage(self):
         self.webEngineView.load(QUrl('http://localhost:6006/'))
