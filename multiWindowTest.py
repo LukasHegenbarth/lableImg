@@ -25,18 +25,25 @@ class stackedWindow(QWidget):
         self.Stack.addWidget(self.stack2)
         self.Stack.addWidget(self.stack3)
 
-        hbox = QHBoxLayout(self)
-        hbox.addWidget(self.button1)
-        hbox.addWidget(self.button2)
-        hbox.addWidget(self.button3)
-        hbox.addWidget(self.Stack)
+        self.main_vbox = QVBoxLayout(self)
 
-        self.setLayout(hbox)
+        self.button_layout = QHBoxLayout(self)
+        self.button_layout.addWidget(self.button1)
+        self.button_layout.addWidget(self.button2)
+        self.button_layout.addWidget(self.button3)
+
+        self.window_layout = QVBoxLayout(self)
+        self.window_layout.addWidget(self.Stack)
+
+        self.main_vbox.addLayout(self.button_layout)
+        self.main_vbox.addLayout(self.window_layout)
+
+        self.setLayout(self.main_vbox)
         self.button1.clicked.connect(self.button1_fcn)
         self.button2.clicked.connect(self.button2_fcn)
         self.button3.clicked.connect(self.button3_fcn)
         self.setGeometry(300, 50, 10, 10)
-        self.setWindowTitle('Training Data Pipeline')
+        # self.setWindowTitle('Training Data Pipeline')
 
     def stack1UI(self):
         layout = QFormLayout()
@@ -56,9 +63,7 @@ class stackedWindow(QWidget):
 
     def stack3UI(self):
         layout = QHBoxLayout()
-        layout.addWidget(QLabel("subjects"))
-        layout.addWidget(QCheckBox("Physics"))
-        layout.addWidget(QCheckBox("Maths"))
+        layout.addWidget(QLabel("This Page shows notihing yet"))
         self.stack3.setLayout(layout)
 
     def button1_fcn(self):
@@ -79,6 +84,11 @@ class stackedWindow(QWidget):
         self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3.setStyleSheet("background-color: #003c8f")
 
+
+# class MainWindow(QMainWindow):
+#     def __init__(self, defaultFilename=None, defaultPrefdefClassFile=None, defaultSaveDir=None):
+#         super(MainWindow, self).__init__()
+#         self.setWindowTitle("Data Pipeline")
 
 def main():
     app = QApplication(sys.argv)
