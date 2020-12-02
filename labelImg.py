@@ -228,8 +228,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Actions
         action = partial(newAction, self)
-        trainNeuralNet = action('Train Neural Network', self.on_click,
-                      'Ctrl+Shift+T', 'trainNeuralNet', 'trainNeuralNet')
 
         predictLabels = action('Predict Labels', self.on_click,
                       'Ctrl+Shift+P', 'predictLabels', 'predictLabels')
@@ -374,7 +372,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  trainNeuralNet, predictLabels, createTfRecord, open, opendir, save, saveAs, close, resetAll, quit),
+                                  predictLabels, createTfRecord, open, opendir, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1, self.drawSquaresOption),
@@ -411,7 +409,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.displayLabelOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (trainNeuralNet, predictLabels, createTfRecord, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
+                   (predictLabels, createTfRecord, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -428,23 +426,17 @@ class MainWindow(QMainWindow, WindowMixin):
         addActions(self.canvas.menus[0], self.actions.beginnerContext)
         addActions(self.canvas.menus[1], (
             action('&Copy here', self.copyShape),
-            action('&Move here', self.moveShape)))
-
-        self.pipelineTools = self.trainPipelineToolbar('PipelineTools')
-        
+            action('&Move here', self.moveShape)))  
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
             open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
-            zoomIn, zoom, zoomOut, fitWindow, fitWidth)
+            zoomIn, zoom, zoomOut, fitWindow, fitWidth, predictLabels, createTfRecord)
 
         self.actions.advanced = (
             open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
             createMode, editMode, None,
             hideAll, showAll)
-
-        self.actions.pipeline = (
-            trainNeuralNet, predictLabels, createTfRecord)
 
         self.statusBar().showMessage('%s started.' % __appname__)
         self.statusBar().show()
@@ -577,9 +569,6 @@ class MainWindow(QMainWindow, WindowMixin):
         else:
             tool, menu = self.actions.advanced, self.actions.advancedContext
 
-        pipeline = self.actions.pipeline
-        self.pipelineTools.clear()
-        addActions(self.pipelineTools, pipeline)
         self.tools.clear()
         addActions(self.tools, tool)
         self.canvas.menus[0].clear()
