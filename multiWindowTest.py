@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 
 class stackedWindow(QWidget):
@@ -62,9 +63,15 @@ class stackedWindow(QWidget):
         self.stack2.setLayout(layout)
 
     def stack3UI(self):
-        layout = QHBoxLayout()
-        layout.addWidget(QLabel("This Page shows notihing yet"))
-        self.stack3.setLayout(layout)
+        vbox = QVBoxLayout(self)
+        self.webEngineView = QWebEngineView()
+        self.loadPage()
+        vbox.addWidget(self.webEngineView)
+
+        self.stack3.setLayout(vbox)
+
+    def loadPage(self):
+        self.webEngineView.load(QUrl('http://localhost:6006/'))
 
     def button1_fcn(self):
         self.Stack.setCurrentIndex(0)
