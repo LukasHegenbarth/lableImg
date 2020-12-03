@@ -9,9 +9,11 @@ class stackedWindow(QWidget):
     def __init__(self):
         super(stackedWindow, self).__init__()
         self.button1 = QPushButton('Data \n Labeling')
-        self.button1.setStyleSheet("background-color: #003c8f")
+        self.button1.setStyleSheet("background-color: #0cdd8c")
         self.button2 = QPushButton('Neural Network \n Training')
+        self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3 = QPushButton('Third Page \n')
+        self.button3.setStyleSheet("background-color: #eeeeee")
 
         self.stack1 = QWidget()
         self.stack2 = QWidget()
@@ -67,6 +69,7 @@ class stackedWindow(QWidget):
         self.trainingStatus = QLabel('Training Status')
 
         self.trainingStatus.setMaximumWidth(250)
+        self.trainingStatus.setStyleSheet("background-color: transparent")
         paramVBox.addWidget(self.trainingButton)
         paramVBox.addWidget(self.trainingStatus)
         paramVBox.setAlignment(Qt.AlignTop)
@@ -86,9 +89,11 @@ class stackedWindow(QWidget):
         paramBox = QHBoxLayout(self)
         paramName = QLabel(param)
         paramName.setMaximumWidth(150)
+        paramName.setStyleSheet("background-color: transparent")
         paramBox.addWidget(paramName)
         lineEdit = QLineEdit()
         lineEdit.setMaximumWidth(200)
+        lineEdit.setStyleSheet("background-color: #ffffff")
         paramBox.addWidget(lineEdit)
         layout.addLayout(paramBox)
 
@@ -97,21 +102,21 @@ class stackedWindow(QWidget):
 
     def button1_fcn(self):
         self.Stack.setCurrentIndex(0)
-        self.button1.setStyleSheet("background-color: #003c8f")
+        self.button1.setStyleSheet("background-color: #0cdd8c")
         self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3.setStyleSheet("background-color: #eeeeee")
 
     def button2_fcn(self):
         self.Stack.setCurrentIndex(1)
         self.button1.setStyleSheet("background-color: #eeeeee")
-        self.button2.setStyleSheet("background-color: #003c8f")
+        self.button2.setStyleSheet("background-color: #0cdd8c")
         self.button3.setStyleSheet("background-color: #eeeeee")
 
     def button3_fcn(self):
         self.Stack.setCurrentIndex(2)
         self.button1.setStyleSheet("background-color: #eeeeee")
         self.button2.setStyleSheet("background-color: #eeeeee")
-        self.button3.setStyleSheet("background-color: #003c8f")
+        self.button3.setStyleSheet("background-color: #0cdd8c")
 
 
 # class MainWindow(QMainWindow):
@@ -122,6 +127,9 @@ class stackedWindow(QWidget):
 def main():
     app = QApplication(sys.argv)
     stacked_window = stackedWindow()
+    # stacked_window.setStyleSheet("background-color: #cfd8dc")
+    stacked_window.setStyleSheet("background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1," 
+                                 "stop: 0 white, stop: 1 grey);")
     stacked_window.show()
     sys.exit(app.exec_())
 
