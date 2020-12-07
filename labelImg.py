@@ -69,6 +69,16 @@ class WindowMixin(object):
             addActions(toolbar, actions)
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
+    
+    def trainPipelineToolbar(self, title, actions=None):
+        trainPipelineToolbar = ToolBar(title)
+        trainPipelineToolbar.setObjectName(u'%sTrainPipelineToolbar' % title)
+        trainPipelineToolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        if actions:
+            addActions(trainPipelineToolbar, actions)
+        self.addToolBar(Qt.RightToolBarArea, trainPipelineToolbar)
+        return trainPipelineToolbar
+
 
 
 class MainWindow(QMainWindow, WindowMixin):
@@ -135,10 +145,21 @@ class MainWindow(QMainWindow, WindowMixin):
         self.editButton = QToolButton()
         self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
+        #Add costum button
+        # self.customButton = QPushButton('useCustom', self)
+        # useCustomQHBoxLayout = QHBoxLayout()
+        # self.customButton.clicked.connect(self.on_click)
+        # useCustomQHBoxLayout.addWidget(self.customButton)
+        # useCustomContainer = QWidget()
+        # useCustomContainer.setLayout(useCustomQHBoxLayout)
+
+
         # Add some of widgets to listLayout
         listLayout.addWidget(self.editButton)
         listLayout.addWidget(self.diffcButton)
         listLayout.addWidget(useDefaultLabelContainer)
+        
+        
 
         # Create and add combobox for showing unique labels in group
         self.comboBox = ComboBox(self)
@@ -157,6 +178,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
 
 
+        
+
         self.dock = QDockWidget(getStr('boxLabelText'), self)
         self.dock.setObjectName(getStr('labels'))
         self.dock.setWidget(labelListContainer)
@@ -171,6 +194,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.filedock = QDockWidget(getStr('fileList'), self)
         self.filedock.setObjectName(getStr('files'))
         self.filedock.setWidget(fileListContainer)
+
 
         self.zoomWidget = ZoomWidget()
         self.colorDialog = ColorDialog(parent=self)
@@ -202,8 +226,18 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dockFeatures = QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable
         self.dock.setFeatures(self.dock.features() ^ self.dockFeatures)
 
+        #Custom button
+        # listLayout.addWidget(self.customButton)
+
         # Actions
         action = partial(newAction, self)
+
+        predictLabels = action('Predict Labels', self.on_click,
+                      'Ctrl+Shift+P', 'predictLabels', 'predictLabels')
+
+        createTfRecord = action('Create TfRecord File', self.on_click, 
+                      'Crtl+Shift+C', 'createTfRecord', 'createTfRecord')
+
         quit = action(getStr('quit'), self.close,
                       'Ctrl+Q', 'quit', getStr('quitApp'))
 
@@ -359,7 +393,7 @@ class MainWindow(QMainWindow, WindowMixin):
                               fitWindow=fitWindow, fitWidth=fitWidth,
                               zoomActions=zoomActions,
                               fileMenuActions=(
-                                  open, opendir, save, saveAs, close, resetAll, quit),
+                                  predictLabels, createTfRecord, open, opendir, save, saveAs, close, resetAll, quit),
                               beginner=(), advanced=(),
                               editMenu=(edit, copy, delete,
                                         None, color1, self.drawSquaresOption),
@@ -396,7 +430,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.displayLabelOption.triggered.connect(self.togglePaintLabelsOption)
 
         addActions(self.menus.file,
-                   (open, opendir, copyPrevBounding, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, deleteImg, quit))
+                   (predictLabels, createTfRecord, open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, save_format, saveAs, close, resetAll, quit))
         addActions(self.menus.help, (help, showInfo))
         addActions(self.menus.view, (
             self.autoSaving,
@@ -413,12 +447,12 @@ class MainWindow(QMainWindow, WindowMixin):
         addActions(self.canvas.menus[0], self.actions.beginnerContext)
         addActions(self.canvas.menus[1], (
             action('&Copy here', self.copyShape),
-            action('&Move here', self.moveShape)))
+            action('&Move here', self.moveShape)))  
 
         self.tools = self.toolbar('Tools')
         self.actions.beginner = (
             open, opendir, changeSavedir, openNextImg, openPrevImg, verify, save, save_format, None, create, copy, delete, None,
-            zoomIn, zoom, zoomOut, fitWindow, fitWidth)
+            zoomIn, zoom, zoomOut, fitWindow, fitWidth, predictLabels, createTfRecord)
 
         self.actions.advanced = (
             open, opendir, changeSavedir, openNextImg, openPrevImg, save, save_format, None,
@@ -440,6 +474,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fit_window = False
         # Add Chris
         self.difficult = False
+        # self.custom = False
 
         ## Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
         if settings.get(SETTING_RECENT_FILES):
@@ -473,6 +508,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.setDrawingColor(self.lineColor)
         # Add chris
         Shape.difficult = self.difficult
+        # Shape.custom = self.custom
 
         def xbool(x):
             if isinstance(x, QVariant):
@@ -565,6 +601,7 @@ class MainWindow(QMainWindow, WindowMixin):
             tool, menu = self.actions.beginner, self.actions.beginnerContext
         else:
             tool, menu = self.actions.advanced, self.actions.advancedContext
+
         self.tools.clear()
         addActions(self.tools, tool)
         self.canvas.menus[0].clear()
@@ -748,6 +785,10 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
         except:
             pass
+
+    #custom action
+    def on_click(self):
+        print('PyQt5 button click')
 
     # React to canvas signals.
     def shapeSelectionChanged(self, selected=False):
