@@ -24,24 +24,6 @@ except ImportError:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
 
-from combobox import ComboBox
-from libs.canvas import Canvas
-from libs.colorDialog import ColorDialog
-from libs.constants import *
-from libs.hashableQListWidgetItem import HashableQListWidgetItem
-from libs.labelDialog import LabelDialog
-from libs.labelFile import LabelFile, LabelFileError
-from libs.pascal_voc_io import XML_EXT, PascalVocReader
-from libs.resources import *
-from libs.settings import Settings
-from libs.shape import DEFAULT_FILL_COLOR, DEFAULT_LINE_COLOR, Shape
-from libs.stringBundle import StringBundle
-from libs.toolBar import ToolBar
-from libs.ustr import ustr
-from libs.utils import *
-from libs.yolo_io import TXT_EXT, YoloReader
-from libs.zoomWidget import ZoomWidget
-
 
 class stackedWindow(QWidget):
     def __init__(self):
