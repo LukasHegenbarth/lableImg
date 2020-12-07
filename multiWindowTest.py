@@ -89,8 +89,8 @@ class stackedWindow(QWidget):
 
     def stack1UI(self):
         layout = QFormLayout()
-        layout.addRow("Name", QLineEdit())
-        layout.addRow("Address", QLineEdit())
+        label = QLabel('labelImg app will be included here')
+        layout.addWidget(label)
         self.stack1.setLayout(layout)
 
     def stack2UI(self):
