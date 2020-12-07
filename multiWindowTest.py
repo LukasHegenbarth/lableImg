@@ -1,8 +1,46 @@
+import codecs
+import distutils.spawn
+import os.path
+import platform
+import re
+import subprocess
 import sys
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from collections import defaultdict
+from functools import partial
+
+try:
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
+except ImportError:
+    # needed for py3+qt4
+    # Ref:
+    # http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html
+    # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
+    if sys.version_info.major >= 3:
+        import sip
+        sip.setapi('QVariant', 2)
+    from PyQt4.QtGui import *
+    from PyQt4.QtCore import *
+
+from combobox import ComboBox
+from libs.canvas import Canvas
+from libs.colorDialog import ColorDialog
+from libs.constants import *
+from libs.hashableQListWidgetItem import HashableQListWidgetItem
+from libs.labelDialog import LabelDialog
+from libs.labelFile import LabelFile, LabelFileError
+from libs.pascal_voc_io import XML_EXT, PascalVocReader
+from libs.resources import *
+from libs.settings import Settings
+from libs.shape import DEFAULT_FILL_COLOR, DEFAULT_LINE_COLOR, Shape
+from libs.stringBundle import StringBundle
+from libs.toolBar import ToolBar
+from libs.ustr import ustr
+from libs.utils import *
+from libs.yolo_io import TXT_EXT, YoloReader
+from libs.zoomWidget import ZoomWidget
 
 
 class stackedWindow(QWidget):
@@ -119,18 +157,22 @@ class stackedWindow(QWidget):
         self.button3.setStyleSheet("background-color: #0cdd8c")
 
 
-# class MainWindow(QMainWindow):
-#     def __init__(self, defaultFilename=None, defaultPrefdefClassFile=None, defaultSaveDir=None):
-#         super(MainWindow, self).__init__()
-#         self.setWindowTitle("Data Pipeline")
+class MainWindow(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle("Data Pipeline")
+        stacked_window = stackedWindow()
+        self.setCentralWidget(stacked_window)
 
 def main():
     app = QApplication(sys.argv)
-    stacked_window = stackedWindow()
-    # stacked_window.setStyleSheet("background-color: #cfd8dc")
-    stacked_window.setStyleSheet("background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1," 
-                                 "stop: 0 white, stop: 1 grey);")
-    stacked_window.show()
+    # stacked_window = stackedWindow()
+    # # stacked_window.setStyleSheet("background-color: #cfd8dc")
+    # stacked_window.setStyleSheet("background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1," 
+    #                              "stop: 0 white, stop: 1 grey);")
+    # stacked_window.show()
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec_())
 
 
