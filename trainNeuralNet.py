@@ -11,6 +11,7 @@ from functools import partial
 import tensorflow as tf
 from google.protobuf import text_format
 from object_detection.protos import pipeline_pb2
+import glob
 
 try:
     from PyQt5.QtCore import *
@@ -132,9 +133,10 @@ class stackedWindow(QWidget):
 
         #checkable combobox for training data selection
         #TODO annotation files from folder -> glob or similar
+        annotation_records = glob.glob('/home/lukas/training_workspace/data/beet/TFRecords/*.record')
 
         #TODO add checkbox to select deselect all files, files should be selected by default
-        annotation_records = ['test', 'test']
+        # annotation_records = ['test', 'test']
         self.trainingData = CheckableComboBox()
         self.trainingData.addItems(annotation_records)
         self.trainingData.setMaximumWidth(250)
