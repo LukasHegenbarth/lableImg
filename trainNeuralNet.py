@@ -101,23 +101,23 @@ class stackedWindow(QWidget):
 
         configs = get_configs_from_pipeline_file('/home/lukas/coding/labelImg/pipeline copy.config')
         #add all necessary param fields
-        self.addParamLine(paramVBox, 'fine tune checkpoint', configs.train_config.fine_tune_checkpoint)
-        self.addParamLine(paramVBox, 'label map path', configs.train_input_reader.label_map_path)
-        self.addParamLine(paramVBox, 'num classes', str(configs.model.ssd.num_classes))
-        self.addParamLine(paramVBox, 'batch size', str(configs.train_config.batch_size))
-        self.addParamLine(paramVBox, 'learning rate',
+        self.fineTuneCheckpoint = self.addParamLine(paramVBox, 'fine tune checkpoint', configs.train_config.fine_tune_checkpoint)
+        self.labelMapPath = self.addParamLine(paramVBox, 'label map path', configs.train_input_reader.label_map_path)
+        self.numClasses = self.addParamLine(paramVBox, 'num classes', str(configs.model.ssd.num_classes))
+        self.batchSize = self.addParamLine(paramVBox, 'batch size', str(configs.train_config.batch_size))
+        self.learningRate = self.addParamLine(paramVBox, 'learning rate',
                           str(configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           learning_rate_base))
-        self.addParamLine(paramVBox, 'warmup learning rate', 
+        self.warmupLearningRate = self.addParamLine(paramVBox, 'warmup learning rate', 
                           str(configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           warmup_learning_rate))
-        self.addParamLine(paramVBox, 'total steps', 
+        self.totalSteps = self.addParamLine(paramVBox, 'total steps', 
                           str(configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           total_steps))
-        self.addParamLine(paramVBox, 'warmup steps',
+        self.warmupSteps = self.addParamLine(paramVBox, 'warmup steps',
                           str(configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           warmup_steps))
@@ -178,6 +178,7 @@ class stackedWindow(QWidget):
         lineEdit.setStyleSheet("background-color: #ffffff")
         paramBox.addWidget(lineEdit)
         layout.addLayout(paramBox)
+        return lineEdit
 
     def loadPage(self):
         self.webEngineView.load(QUrl('http://localhost:6006/'))
@@ -202,6 +203,16 @@ class stackedWindow(QWidget):
 
     def start_training(self):
         print('starting training')
+        #set the following params in new pipeline config
+        print(self.fineTuneCheckpoint.text())
+        print(self.labelMapPath.text())
+        print(self.numClasses.text())
+        print(self.batchSize.text())
+        print(self.learningRate.text())
+        print(self.warmupLearningRate.text())
+        print(self.totalSteps.text())
+        print(self.warmupSteps.text())
+        print(self.trainingData.currentData())
 
 class CheckableComboBox(QComboBox):
 
