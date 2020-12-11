@@ -2,6 +2,7 @@ import tensorflow as tf
 from google.protobuf import text_format
 
 from object_detection.protos import pipeline_pb2
+from object_detection.protos.input_reader_pb2 import TFRecordInputReader
 
 def get_configs_from_pipeline_file(pipeline_config_path, config_override=None):
 
@@ -18,27 +19,6 @@ def get_configs_from_pipeline_file(pipeline_config_path, config_override=None):
   #print(pipeline_config)
   return pipeline_config
 
-
-# def create_configs_from_pipeline_proto(pipeline_config):
-#   '''
-#   Returns the configurations as dictionary
-#   '''
-
-#   configs = {}
-#   configs["model"] = pipeline_config.model
-#   configs["train_config"] = pipeline_config.train_config
-#   configs["train_input_config"] = pipeline_config.train_input_reader
-#   configs["eval_config"] = pipeline_config.eval_config
-#   configs["eval_input_configs"] = pipeline_config.eval_input_reader
-#   # Keeps eval_input_config only for backwards compatibility. All clients should
-#   # read eval_input_configs instead.
-#   if configs["eval_input_configs"]:
-#     configs["eval_input_config"] = configs["eval_input_configs"][0]
-#   if pipeline_config.HasField("graph_rewriter"):
-#     configs["graph_rewriter_config"] = pipeline_config.graph_rewriter
-
-#   return configs
-
 def write_configs_to_new_file(configs, new_file):
     with tf.io.gfile.GFile(new_file, "w") as f:
         f.write(configs)
@@ -48,6 +28,12 @@ def write_configs_to_new_file(configs, new_file):
 
 configs = get_configs_from_pipeline_file('/home/lukas/coding/labelImg/pipeline copy.config')
 # config_as_dict = create_configs_from_pipeline_proto(configs)
+
+#use assignment to set values in configs
 configs.model.ssd.num_classes = 4
 config_text = text_format.MessageToString(configs)
-write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
+# write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
+
+#use append to add new line to configs
+configs.train_input_reader.tf_record_input_reader.input_path.append('test')
+print(configs.train_input_reader.tf_record_input_reader)
