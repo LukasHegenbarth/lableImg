@@ -49,7 +49,7 @@ class stackedWindow(QWidget):
     def __init__(self):
         super(stackedWindow, self).__init__()
         self.button1 = QPushButton('Data \n Labeling')
-        self.button1.setStyleSheet("background-color: #0cdd8c")
+        self.button1.setStyleSheet("background-color: #00675b")
         self.button2 = QPushButton('Neural Network \n Training')
         self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3 = QPushButton('Third Page \n')
@@ -100,10 +100,9 @@ class stackedWindow(QWidget):
         #TODO add param list for training config
         paramVBox = QVBoxLayout(self)
 
-        self.configs = get_configs_from_pipeline_file('/home/lukas/coding/labelImg/pipeline copy.config')
+        self.configs = get_configs_from_pipeline_file('/home/lukas/training_workspace/pretrained_models/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8/pipeline.config')
         #add all necessary param fields
         self.fineTuneCheckpoint = self.addParamLine(paramVBox, 'fine tune checkpoint', self.configs.train_config.fine_tune_checkpoint)
-        self.labelMapPath = self.addParamLine(paramVBox, 'label map path', self.configs.train_input_reader.label_map_path)
         self.numClasses = self.addParamLine(paramVBox, 'num classes', str(self.configs.model.ssd.num_classes))
         self.batchSize = self.addParamLine(paramVBox, 'batch size', str(self.configs.train_config.batch_size))
         self.learningRate = self.addParamLine(paramVBox, 'learning rate',
@@ -123,6 +122,21 @@ class stackedWindow(QWidget):
                           learning_rate.cosine_decay_learning_rate.
                           warmup_steps))
 
+        #label map pbtxt selection
+        # self.labelMapPath = self.addParamLine(paramVBox, 'label map path', self.configs.train_input_reader.label_map_path)
+        paramBoxLabelMap = QHBoxLayout(self)
+        paramLabelMap = QLabel('label map')
+        paramLabelMap.setMaximumWidth(150)
+        paramLabelMap.setStyleSheet("background-color: transparent")
+        paramBoxLabelMap.addWidget(paramLabelMap)
+        comboBoxLabelMap = QComboBox()
+        comboBoxLabelMap.setMaximumWidth(410)
+        for item in glob.glob('/home/lukas/training_workspace/data/*/*.pbtxt'):
+            comboBoxLabelMap.addItem(item)
+        paramVBox.addWidget(paramLabelMap)
+        paramVBox.addWidget(comboBoxLabelMap)
+        
+        
         
         #training data selection
         paramBox = QHBoxLayout(self)
@@ -131,6 +145,7 @@ class stackedWindow(QWidget):
         paramName.setStyleSheet("background-color: transparent")
         paramBox.addWidget(paramName)
         self.selectAll = QCheckBox()
+        self.selectAll.setCheckState(Qt.Checked)
         self.selectAll.stateChanged.connect(self.select_all)
         hBox = QHBoxLayout(self)
         hBox.addWidget(QLabel('select all'))
@@ -196,21 +211,21 @@ class stackedWindow(QWidget):
 
     def button1_fcn(self):
         self.Stack.setCurrentIndex(0)
-        self.button1.setStyleSheet("background-color: #0cdd8c")
+        self.button1.setStyleSheet("background-color: #00675b")
         self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3.setStyleSheet("background-color: #eeeeee")
 
     def button2_fcn(self):
         self.Stack.setCurrentIndex(1)
         self.button1.setStyleSheet("background-color: #eeeeee")
-        self.button2.setStyleSheet("background-color: #0cdd8c")
+        self.button2.setStyleSheet("background-color: #00675b")
         self.button3.setStyleSheet("background-color: #eeeeee")
 
     def button3_fcn(self):
         self.Stack.setCurrentIndex(2)
         self.button1.setStyleSheet("background-color: #eeeeee")
         self.button2.setStyleSheet("background-color: #eeeeee")
-        self.button3.setStyleSheet("background-color: #0cdd8c")
+        self.button3.setStyleSheet("background-color: #00675b")
 
     def start_training(self):
         print('starting training')
@@ -227,6 +242,10 @@ class stackedWindow(QWidget):
 
         config_text = text_format.MessageToString(self.configs)
         self.write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
+
+        #command for training
+        # python3 model_main_tf2.py --model_dir=models/my_ssd_mobilenet/ --pipeline_config_path=models/my_ssd_mobilenet/pipeline.config 
+
 
     def select_all(self):
         if self.selectAll.checkState() == Qt.Checked:
