@@ -12,6 +12,7 @@ import tensorflow as tf
 from google.protobuf import text_format
 from object_detection.protos import pipeline_pb2
 import glob
+import gpu_util
 
 try:
     from PyQt5.QtCore import *
@@ -97,7 +98,6 @@ class stackedWindow(QWidget):
 
     def stack2UI(self):
         hbox = QHBoxLayout(self)
-        #TODO add param list for training config
         paramVBox = QVBoxLayout(self)
 
         self.configs = get_configs_from_pipeline_file('/home/lukas/training_workspace/pretrained_models/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8/pipeline.config')
@@ -155,11 +155,7 @@ class stackedWindow(QWidget):
         paramVBox.addLayout(paramBox)
 
         #checkable combobox for training data selection
-        #TODO annotation files from folder -> glob or similar
         annotation_records = glob.glob('/home/lukas/training_workspace/data/beet/TFRecords/*.record')
-
-        #TODO add checkbox to select deselect all files, files should be selected by default
-        # annotation_records = ['test', 'test']
         self.trainingData = CheckableComboBox()
         self.trainingData.addItems(annotation_records)
         self.trainingData.selectAll()
@@ -185,6 +181,27 @@ class stackedWindow(QWidget):
         hbox.addLayout(paramVBox)
         hbox.addWidget(self.webEngineView)
         self.stack2.setLayout(hbox)
+
+        self.gpu_info = gpu_util.Gpu_Info()
+        self.memoryTotal = QLabel()
+        self.memoryUsed = QLabel()
+        self.memoryFree = QLabel()
+        self.maxUsage = QLabel()
+        self.minUsage = QLabel()
+        self.avgUsage = QLabel()
+        
+        paramVBox.addWidget(self.memoryTotal)
+        paramVBox.addWidget(self.memoryUsed)
+        paramVBox.addWidget(self.memoryFree)
+        paramVBox.addWidget(self.minUsage)
+        paramVBox.addWidget(self.maxUsage)
+        paramVBox.addWidget(self.avgUsage)
+
+
+        self.timer = QTimer()
+        self.timer.setInterval(250)
+        self.timer.timeout.connect(self.update_gpu_data)
+        self.timer.start()
 
     def stack3UI(self):
         layout = QFormLayout()
@@ -241,10 +258,20 @@ class stackedWindow(QWidget):
             self.configs.train_input_reader.tf_record_input_reader.input_path.append(data)
 
         config_text = text_format.MessageToString(self.configs)
+        #TODO create path in sessions folder 
         self.write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
 
         #command for training
         # python3 model_main_tf2.py --model_dir=models/my_ssd_mobilenet/ --pipeline_config_path=models/my_ssd_mobilenet/pipeline.config 
+
+    def update_gpu_data(self):
+        info = self.gpu_info.get()
+        self.memoryTotal.setText('Memory Total:' + str(info[0]))
+        self.memoryUsed.setText('Memory Used: ' + str(info[1])) 
+        self.memoryFree.setText('Memory Free: ' + str(info[2]))
+        self.maxUsage.setText('Max Usage: ' + str(info[3]))
+        self.minUsage.setText('Min Usage: ' + str(info[4]))
+        self.avgUsage.setText('Avg Usage: ' + str(info[5]))
 
 
     def select_all(self):
@@ -252,6 +279,7 @@ class stackedWindow(QWidget):
             self.trainingData.selectAll()
         if self.selectAll.checkState() == Qt.Unchecked:   
             self.trainingData.deselectAll()
+
     def write_configs_to_new_file(self, configs, new_file):
         with tf.io.gfile.GFile(new_file, "w") as f:
             f.write(configs)
