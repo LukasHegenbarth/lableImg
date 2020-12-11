@@ -130,6 +130,14 @@ class stackedWindow(QWidget):
         paramName.setMaximumWidth(150)
         paramName.setStyleSheet("background-color: transparent")
         paramBox.addWidget(paramName)
+        self.selectAll = QCheckBox()
+        self.selectAll.stateChanged.connect(self.select_all)
+        hBox = QHBoxLayout(self)
+        hBox.addWidget(QLabel('select all'))
+        hBox.addWidget(self.selectAll)
+        hBox.setAlignment(Qt.AlignRight)
+        paramBox.addLayout(hBox)
+        paramVBox.addLayout(paramBox)
 
         #checkable combobox for training data selection
         #TODO annotation files from folder -> glob or similar
@@ -139,11 +147,10 @@ class stackedWindow(QWidget):
         # annotation_records = ['test', 'test']
         self.trainingData = CheckableComboBox()
         self.trainingData.addItems(annotation_records)
-        self.trainingData.setMaximumWidth(250)
-        paramBox.addWidget(self.trainingData)
-        paramVBox.addLayout(paramBox)
-        
-        
+        self.trainingData.selectAll()
+        self.trainingData.setMaximumWidth(410)   
+        paramVBox.addWidget(self.trainingData)
+
         self.trainingButton = QPushButton('start Training')
         self.trainingButton.clicked.connect(self.start_training)
         paramVBox.addWidget(self.trainingButton)
@@ -155,6 +162,7 @@ class stackedWindow(QWidget):
         
         paramVBox.addWidget(self.trainingStatus)
         self.trainingProgress = QProgressBar()
+        self.trainingProgress.setMaximumWidth(400)
         paramVBox.addWidget(self.trainingProgress)
         paramVBox.setAlignment(Qt.AlignTop)
         self.webEngineView = QWebEngineView()
@@ -219,11 +227,18 @@ class stackedWindow(QWidget):
 
         config_text = text_format.MessageToString(self.configs)
         self.write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
-    
+
+    def select_all(self):
+        if self.selectAll.checkState() == Qt.Checked:
+            self.trainingData.selectAll()
+        if self.selectAll.checkState() == Qt.Unchecked:   
+            self.trainingData.deselectAll()
     def write_configs_to_new_file(self, configs, new_file):
         with tf.io.gfile.GFile(new_file, "w") as f:
             f.write(configs)
         f.close()
+
+    
 
 class CheckableComboBox(QComboBox):
 
@@ -341,6 +356,14 @@ class CheckableComboBox(QComboBox):
             if self.model().item(i).checkState() == Qt.Checked:
                 res.append(self.model().item(i).data())
         return res
+
+    def selectAll(self):
+        for i in range(self.model().rowCount()):
+            self.model().item(i).setCheckState(Qt.Checked)
+
+    def deselectAll(self):
+        for i in range (self.model().rowCount()):
+            self.model().item(i).setCheckState(Qt.Unchecked)
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
