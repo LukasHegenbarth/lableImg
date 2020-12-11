@@ -8,11 +8,15 @@ import sys
 from collections import defaultdict
 from functools import partial
 
+import tensorflow as tf
+from google.protobuf import text_format
+from object_detection.protos import pipeline_pb2
+
 try:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
-    from PyQt5.QtWidgets import *
     from PyQt5.QtWebEngineWidgets import QWebEngineView
+    from PyQt5.QtWidgets import *
 except ImportError:
     # needed for py3+qt4
     # Ref:
@@ -21,8 +25,23 @@ except ImportError:
     if sys.version_info.major >= 3:
         import sip
         sip.setapi('QVariant', 2)
-    from PyQt4.QtGui import *
     from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+
+
+def get_configs_from_pipeline_file(pipeline_config_path, config_override=None):
+    '''
+    read .config and convert it to proto_buffer_object
+    '''
+
+    pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
+    with tf.io.gfile.GFile(pipeline_config_path, "r") as f:
+        proto_str = f.read()
+        text_format.Merge(proto_str, pipeline_config)
+    if config_override:
+        text_format.Merge(config_override, pipeline_config)
+    #print(pipeline_config)
+    return pipeline_config
 
 
 class stackedWindow(QWidget):
@@ -77,24 +96,63 @@ class stackedWindow(QWidget):
 
     def stack2UI(self):
         hbox = QHBoxLayout(self)
-        #TODO add param list for training config 
+        #TODO add param list for training config
         paramVBox = QVBoxLayout(self)
-        #add all necessary param fields 
-        self.addParamLine(paramVBox, 'fine tune checkpoint')
-        self.addParamLine(paramVBox, 'label map path')
-        self.addParamLine(paramVBox, 'num classes', '2')
-        self.addParamLine(paramVBox, 'batch size')
-        self.addParamLine(paramVBox, 'learning rate')
-        self.addParamLine(paramVBox, 'total steps')
-        self.addParamLine(paramVBox, 'warmup steps')
-        self.addParamLine(paramVBox, 'warmup learning rate')
+
+        configs = get_configs_from_pipeline_file('/home/lukas/coding/labelImg/pipeline copy.config')
+        #add all necessary param fields
+        self.addParamLine(paramVBox, 'fine tune checkpoint', configs.train_config.fine_tune_checkpoint)
+        self.addParamLine(paramVBox, 'label map path', configs.train_input_reader.label_map_path)
+        self.addParamLine(paramVBox, 'num classes', str(configs.model.ssd.num_classes))
+        self.addParamLine(paramVBox, 'batch size', str(configs.train_config.batch_size))
+        self.addParamLine(paramVBox, 'learning rate',
+                          str(configs.train_config.optimizer.momentum_optimizer.
+                          learning_rate.cosine_decay_learning_rate.
+                          learning_rate_base))
+        self.addParamLine(paramVBox, 'warmup learning rate', 
+                          str(configs.train_config.optimizer.momentum_optimizer.
+                          learning_rate.cosine_decay_learning_rate.
+                          warmup_learning_rate))
+        self.addParamLine(paramVBox, 'total steps', 
+                          str(configs.train_config.optimizer.momentum_optimizer.
+                          learning_rate.cosine_decay_learning_rate.
+                          total_steps))
+        self.addParamLine(paramVBox, 'warmup steps',
+                          str(configs.train_config.optimizer.momentum_optimizer.
+                          learning_rate.cosine_decay_learning_rate.
+                          warmup_steps))
+
+        
+        #training data selection
+        paramBox = QHBoxLayout(self)
+        paramName = QLabel('training data')
+        paramName.setMaximumWidth(150)
+        paramName.setStyleSheet("background-color: transparent")
+        paramBox.addWidget(paramName)
+
+        #checkable combobox for training data selection
+        #TODO annotation files from folder -> glob or similar
+        #TODO add checkbox to select deselect all files, files should be selected by default
+        annotation_records = ['test', 'test']
+        self.trainingData = CheckableComboBox()
+        self.trainingData.addItems(annotation_records)
+        self.trainingData.setMaximumWidth(250)
+        paramBox.addWidget(self.trainingData)
+        paramVBox.addLayout(paramBox)
+        
+        
         self.trainingButton = QPushButton('start Training')
+        self.trainingButton.clicked.connect(self.start_training)
+        paramVBox.addWidget(self.trainingButton)
         self.trainingStatus = QLabel('Training Status')
+        
 
         self.trainingStatus.setMaximumWidth(250)
         self.trainingStatus.setStyleSheet("background-color: transparent")
-        paramVBox.addWidget(self.trainingButton)
+        
         paramVBox.addWidget(self.trainingStatus)
+        self.trainingProgress = QProgressBar()
+        paramVBox.addWidget(self.trainingProgress)
         paramVBox.setAlignment(Qt.AlignTop)
         self.webEngineView = QWebEngineView()
         self.loadPage()
@@ -116,7 +174,7 @@ class stackedWindow(QWidget):
         paramBox.addWidget(paramName)
         lineEdit = QLineEdit()
         lineEdit.setText(default_text)
-        lineEdit.setMaximumWidth(200)
+        lineEdit.setMaximumWidth(250)
         lineEdit.setStyleSheet("background-color: #ffffff")
         paramBox.addWidget(lineEdit)
         layout.addLayout(paramBox)
@@ -142,6 +200,125 @@ class stackedWindow(QWidget):
         self.button2.setStyleSheet("background-color: #eeeeee")
         self.button3.setStyleSheet("background-color: #0cdd8c")
 
+    def start_training(self):
+        print('starting training')
+
+class CheckableComboBox(QComboBox):
+
+    # Subclass Delegate to increase item height
+    class Delegate(QStyledItemDelegate):
+        def sizeHint(self, option, index):
+            size = super().sizeHint(option, index)
+            size.setHeight(20)
+            return size
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Make the combo editable to set a custom text, but readonly
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
+        # Make the lineedit the same color as QPushButton
+        palette = qApp.palette()
+        palette.setBrush(QPalette.Base, palette.button())
+        self.lineEdit().setPalette(palette)
+
+        # Use custom delegate
+        self.setItemDelegate(CheckableComboBox.Delegate())
+
+        # Update the text when an item is toggled
+        self.model().dataChanged.connect(self.updateText)
+
+        # Hide and show popup when clicking the line edit
+        self.lineEdit().installEventFilter(self)
+        self.closeOnLineEditClick = False
+
+        # Prevent popup from closing when clicking on an item
+        self.view().viewport().installEventFilter(self)
+
+    def resizeEvent(self, event):
+        # Recompute text to elide as needed
+        self.updateText()
+        super().resizeEvent(event)
+
+    def eventFilter(self, object, event):
+
+        if object == self.lineEdit():
+            if event.type() == QEvent.MouseButtonRelease:
+                if self.closeOnLineEditClick:
+                    self.hidePopup()
+                else:
+                    self.showPopup()
+                return True
+            return False
+
+        if object == self.view().viewport():
+            if event.type() == QEvent.MouseButtonRelease:
+                index = self.view().indexAt(event.pos())
+                item = self.model().item(index.row())
+
+                if item.checkState() == Qt.Checked:
+                    item.setCheckState(Qt.Unchecked)
+                else:
+                    item.setCheckState(Qt.Checked)
+                return True
+        return False
+
+    def showPopup(self):
+        super().showPopup()
+        # When the popup is displayed, a click on the lineedit should close it
+        self.closeOnLineEditClick = True
+
+    def hidePopup(self):
+        super().hidePopup()
+        # Used to prevent immediate reopening when clicking on the lineEdit
+        self.startTimer(100)
+        # Refresh the display text when closing
+        self.updateText()
+
+    def timerEvent(self, event):
+        # After timeout, kill timer, and reenable click on line edit
+        self.killTimer(event.timerId())
+        self.closeOnLineEditClick = False
+
+    def updateText(self):
+        texts = []
+        for i in range(self.model().rowCount()):
+            if self.model().item(i).checkState() == Qt.Checked:
+                texts.append(self.model().item(i).text())
+        text = ", ".join(texts)
+
+        # Compute elided text (with "...")
+        metrics = QFontMetrics(self.lineEdit().font())
+        elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
+        self.lineEdit().setText(elidedText)
+
+    def addItem(self, text, data=None):
+        item = QStandardItem()
+        item.setText(text)
+        if data is None:
+            item.setData(text)
+        else:
+            item.setData(data)
+        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+        item.setData(Qt.Unchecked, Qt.CheckStateRole)
+        self.model().appendRow(item)
+
+    def addItems(self, texts, datalist=None):
+        for i, text in enumerate(texts):
+            try:
+                data = datalist[i]
+            except (TypeError, IndexError):
+                data = None
+            self.addItem(text, data)
+
+    def currentData(self):
+        # Return the list of selected items data
+        res = []
+        for i in range(self.model().rowCount()):
+            if self.model().item(i).checkState() == Qt.Checked:
+                res.append(self.model().item(i).data())
+        return res
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -154,7 +331,7 @@ def main():
     app = QApplication(sys.argv)
     # stacked_window = stackedWindow()
     # # stacked_window.setStyleSheet("background-color: #cfd8dc")
-    # stacked_window.setStyleSheet("background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1," 
+    # stacked_window.setStyleSheet("background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,"
     #                              "stop: 0 white, stop: 1 grey);")
     # stacked_window.show()
     window = MainWindow()
