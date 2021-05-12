@@ -1,12 +1,14 @@
 import codecs
 import distutils.spawn
 import os.path
+# import os.popen4
 import platform
 import re
 import subprocess
 import sys
 from collections import defaultdict
 from functools import partial
+import datetime
 
 import tensorflow as tf
 from google.protobuf import text_format
@@ -98,46 +100,46 @@ class stackedWindow(QWidget):
 
     def stack2UI(self):
         hbox = QHBoxLayout(self)
-        paramVBox = QVBoxLayout(self)
+        self.paramVbox = QVBoxLayout(self)
 
         self.configs = get_configs_from_pipeline_file('/home/lukas/training_workspace/pretrained_models/ssd_mobilenet_v2_fpnlite_640x640_coco17_tpu-8/pipeline.config')
         #add all necessary param fields
-        self.fineTuneCheckpoint = self.addParamLine(paramVBox, 'fine tune checkpoint', self.configs.train_config.fine_tune_checkpoint)
-        self.numClasses = self.addParamLine(paramVBox, 'num classes', str(self.configs.model.ssd.num_classes))
-        self.batchSize = self.addParamLine(paramVBox, 'batch size', str(self.configs.train_config.batch_size))
-        self.learningRate = self.addParamLine(paramVBox, 'learning rate',
+        self.fineTuneCheckpoint = self.addParamLine(self.paramVbox, 'fine tune checkpoint', self.configs.train_config.fine_tune_checkpoint)
+        self.numClasses = self.addParamLine(self.paramVbox, 'num classes', str(self.configs.model.ssd.num_classes))
+        self.batchSize = self.addParamLine(self.paramVbox, 'batch size', str(self.configs.train_config.batch_size))
+        self.learningRate = self.addParamLine(self.paramVbox, 'learning rate',
                           str(self.configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           learning_rate_base))
-        self.warmupLearningRate = self.addParamLine(paramVBox, 'warmup learning rate', 
+        self.warmupLearningRate = self.addParamLine(self.paramVbox, 'warmup learning rate',
                           str(self.configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           warmup_learning_rate))
-        self.totalSteps = self.addParamLine(paramVBox, 'total steps', 
+        self.totalSteps = self.addParamLine(self.paramVbox, 'total steps',
                           str(self.configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           total_steps))
-        self.warmupSteps = self.addParamLine(paramVBox, 'warmup steps',
+        self.warmupSteps = self.addParamLine(self.paramVbox, 'warmup steps',
                           str(self.configs.train_config.optimizer.momentum_optimizer.
                           learning_rate.cosine_decay_learning_rate.
                           warmup_steps))
 
         #label map pbtxt selection
-        # self.labelMapPath = self.addParamLine(paramVBox, 'label map path', self.configs.train_input_reader.label_map_path)
+        # self.labelMapPath = self.addParamLine(self.paramVbox, 'label map path', self.configs.train_input_reader.label_map_path)
         paramBoxLabelMap = QHBoxLayout(self)
-        paramLabelMap = QLabel('label map')
-        paramLabelMap.setMaximumWidth(150)
-        paramLabelMap.setStyleSheet("background-color: transparent")
-        paramBoxLabelMap.addWidget(paramLabelMap)
-        comboBoxLabelMap = QComboBox()
-        comboBoxLabelMap.setMaximumWidth(410)
+        self.paramLabelMap = QLabel('label map')
+        self.paramLabelMap.setMaximumWidth(150)
+        self.paramLabelMap.setStyleSheet("background-color: transparent")
+        paramBoxLabelMap.addWidget(self.paramLabelMap)
+        self.comboBoxLabelMap = QComboBox()
+        self.comboBoxLabelMap.setMaximumWidth(410)
         for item in glob.glob('/home/lukas/training_workspace/data/*/*.pbtxt'):
-            comboBoxLabelMap.addItem(item)
-        paramVBox.addWidget(paramLabelMap)
-        paramVBox.addWidget(comboBoxLabelMap)
-        
-        
-        
+            self.comboBoxLabelMap.addItem(item)
+        self.paramVbox.addWidget(self.paramLabelMap)
+        self.paramVbox.addWidget(self.comboBoxLabelMap)
+
+
+
         #training data selection
         paramBox = QHBoxLayout(self)
         paramName = QLabel('training data')
@@ -152,36 +154,38 @@ class stackedWindow(QWidget):
         hBox.addWidget(self.selectAll)
         hBox.setAlignment(Qt.AlignRight)
         paramBox.addLayout(hBox)
-        paramVBox.addLayout(paramBox)
+        self.paramVbox.addLayout(paramBox)
 
         #checkable combobox for training data selection
         annotation_records = glob.glob('/home/lukas/training_workspace/data/beet/TFRecords/*.record')
         self.trainingData = CheckableComboBox()
         self.trainingData.addItems(annotation_records)
         self.trainingData.selectAll()
-        self.trainingData.setMaximumWidth(410)   
-        paramVBox.addWidget(self.trainingData)
+        self.trainingData.setMaximumWidth(410)
+        self.paramVbox.addWidget(self.trainingData)
 
         self.trainingButton = QPushButton('start Training')
         self.trainingButton.clicked.connect(self.start_training)
-        paramVBox.addWidget(self.trainingButton)
+        self.paramVbox.addWidget(self.trainingButton)
         self.trainingStatus = QLabel('Training Status')
-        
+
 
         self.trainingStatus.setMaximumWidth(250)
         self.trainingStatus.setStyleSheet("background-color: transparent")
-        
-        paramVBox.addWidget(self.trainingStatus)
+
+        self.paramVbox.addWidget(self.trainingStatus)
         self.trainingProgress = QProgressBar()
         self.trainingProgress.setMaximumWidth(400)
-        paramVBox.addWidget(self.trainingProgress)
-        paramVBox.setAlignment(Qt.AlignTop)
+        self.paramVbox.addWidget(self.trainingProgress)
+        self.paramVbox.setAlignment(Qt.AlignTop)
         self.webEngineView = QWebEngineView()
         self.loadPage()
-        hbox.addLayout(paramVBox)
+        hbox.addLayout(self.paramVbox)
         hbox.addWidget(self.webEngineView)
         self.stack2.setLayout(hbox)
 
+        # gpu info
+        # if plot is prefered: https://www.learnpyqt.com/tutorials/plotting-pyqtgraph/
         self.gpu_info = gpu_util.Gpu_Info()
         self.memoryTotal = QLabel()
         self.memoryUsed = QLabel()
@@ -189,13 +193,13 @@ class stackedWindow(QWidget):
         self.maxUsage = QLabel()
         self.minUsage = QLabel()
         self.avgUsage = QLabel()
-        
-        paramVBox.addWidget(self.memoryTotal)
-        paramVBox.addWidget(self.memoryUsed)
-        paramVBox.addWidget(self.memoryFree)
-        paramVBox.addWidget(self.minUsage)
-        paramVBox.addWidget(self.maxUsage)
-        paramVBox.addWidget(self.avgUsage)
+
+        self.paramVbox.addWidget(self.memoryTotal)
+        self.paramVbox.addWidget(self.memoryUsed)
+        self.paramVbox.addWidget(self.memoryFree)
+        self.paramVbox.addWidget(self.minUsage)
+        self.paramVbox.addWidget(self.maxUsage)
+        self.paramVbox.addWidget(self.avgUsage)
 
 
         self.timer = QTimer()
@@ -247,7 +251,8 @@ class stackedWindow(QWidget):
     def start_training(self):
         print('starting training')
         self.configs.train_config.fine_tune_checkpoint = self.fineTuneCheckpoint.text()
-        self.configs.train_input_reader.label_map_path = self.labelMapPath.text()
+        print(self.comboBoxLabelMap.currentText())
+        self.configs.train_input_reader.label_map_path = self.comboBoxLabelMap.currentText()
         self.configs.model.ssd.num_classes = int(self.numClasses.text())
         self.configs.train_config.batch_size = int(self.batchSize.text())
         self.configs.train_config.optimizer.momentum_optimizer.learning_rate.cosine_decay_learning_rate.learning_rate_base = float(self.learningRate.text())
@@ -257,17 +262,40 @@ class stackedWindow(QWidget):
         for data in self.trainingData.currentData():
             self.configs.train_input_reader.tf_record_input_reader.input_path.append(data)
 
+
+        #TODO create path in sessions folder
+        #TODO create folder automatically depending on crop type
+        session_path = '/home/lukas/training_workspace/training/beet/sessions/' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        os.makedirs(session_path)
+        print(session_path)
         config_text = text_format.MessageToString(self.configs)
-        #TODO create path in sessions folder 
-        self.write_configs_to_new_file(config_text, '/home/lukas/coding/labelImg/pipeline new.config')
+        config_path = os.path.join(session_path, 'pipeline.config')
+        print(config_path)
+        self.write_configs_to_new_file(config_text, config_path)
+        # self.training_sp = subprocess.Popen(['python3', '/home/lukas/training_workspace/model_main_tf2.py', '--model_dir=', session_path, '--pipeline_config_path=', config_path])
+        python_string = 'python3 /home/lukas/training_workspace/model_main_tf2.py --model_dir=' + session_path + ' --pipeline_config_path=' + config_path
+        # self.training_sp = subprocess.Popen(['python3 /home/lukas/training_workspace/model_main_tf2.py', '--model_dir=/home/lukas/training_workspace/training/beet/sessions/20201214_210817',  '--pipeline_config_path=/home/lukas/training_workspace/training/beet/sessions/20201214_210817/pipeline.config'])
+        self.training_sp = subprocess.Popen([python_string], shell=True)
+        logdir = os.path.join(session_path, 'train')
+        self.tensorboard_sp = subprocess.Popen(['tensorboard', '--logdir', session_path])
+        # self.terminalOutput = QTextEdit(self)
+        # self.terminalOutput.setMaximumWidth(410)
+        # self.terminalOutput.setMaximumHeight(500)
+        # self.terminalOutput.setReadOnly(True)
+        # self.paramVbox.addWidget(self.terminalOutput)
+        # self.sp = subprocess.Popen(['nvidia-smi' ,'-l', '1'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # for stdout_line in iter(self.sp.stdout.readline, ""):
+        #     yield stdout_line
+        # output = self.sp.stdout.readline().decode("utf-8")
+        # self.terminalOutput.setText(output)
 
         #command for training
-        # python3 model_main_tf2.py --model_dir=models/my_ssd_mobilenet/ --pipeline_config_path=models/my_ssd_mobilenet/pipeline.config 
+        # python3 model_main_tf2.py --model_dir=models/my_ssd_mobilenet/ --pipeline_config_path=models/my_ssd_mobilenet/pipeline.config
 
     def update_gpu_data(self):
         info = self.gpu_info.get()
         self.memoryTotal.setText('Memory Total:' + str(info[0]))
-        self.memoryUsed.setText('Memory Used: ' + str(info[1])) 
+        self.memoryUsed.setText('Memory Used: ' + str(info[1]))
         self.memoryFree.setText('Memory Free: ' + str(info[2]))
         self.maxUsage.setText('Max Usage: ' + str(info[3]))
         self.minUsage.setText('Min Usage: ' + str(info[4]))
@@ -277,7 +305,7 @@ class stackedWindow(QWidget):
     def select_all(self):
         if self.selectAll.checkState() == Qt.Checked:
             self.trainingData.selectAll()
-        if self.selectAll.checkState() == Qt.Unchecked:   
+        if self.selectAll.checkState() == Qt.Unchecked:
             self.trainingData.deselectAll()
 
     def write_configs_to_new_file(self, configs, new_file):
@@ -285,7 +313,7 @@ class stackedWindow(QWidget):
             f.write(configs)
         f.close()
 
-    
+
 
 class CheckableComboBox(QComboBox):
 
@@ -416,8 +444,23 @@ class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         self.setWindowTitle("Data Pipeline")
-        stacked_window = stackedWindow()
-        self.setCentralWidget(stacked_window)
+        self.stacked_window = stackedWindow()
+        self.setCentralWidget(self.stacked_window)
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(
+            self, 'Window Close', 'Are you sure you want to close the window?',
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            while self.stacked_window.training_sp.poll() is None:
+                self.stacked_window.training_sp.terminate()
+            self.stacked_window.tensorboard_sp.terminate()
+            event.accept()
+            print('Window closed')
+        else:
+            event.ignore()
+
 
 def main():
     app = QApplication(sys.argv)

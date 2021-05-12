@@ -20,8 +20,5 @@ class Gpu_Info():
 
         return(mem_total, mem_used, mem_free, gpu_max, gpu_min, gpu_avg)
 
-# gpu_usage = Gpu_Info()
-# print(gpu_usage.get())
-# print(gpu_usage.get())
 
 
