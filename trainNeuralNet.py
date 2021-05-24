@@ -163,13 +163,14 @@ class stackedWindow(QWidget):
         self.trainingData.selectAll()
         self.trainingData.setMaximumWidth(410)
         self.paramVbox.addWidget(self.trainingData)
-
+        
+        #start training button
         self.trainingButton = QPushButton('start Training')
         self.trainingButton.clicked.connect(self.start_training)
         self.paramVbox.addWidget(self.trainingButton)
         self.trainingStatus = QLabel('Training Status')
 
-
+        # training progress bar
         self.trainingStatus.setMaximumWidth(250)
         self.trainingStatus.setStyleSheet("background-color: transparent")
 
@@ -371,8 +372,10 @@ class CheckableComboBox(QComboBox):
 
                 if item.checkState() == Qt.Checked:
                     item.setCheckState(Qt.Unchecked)
+                    print(self.currentData())
                 else:
                     item.setCheckState(Qt.Checked)
+                    print(self.currentData())
                 return True
         return False
 
