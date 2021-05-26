@@ -77,7 +77,7 @@ if __name__=="__main__":
             resized_img = cv2.resize(img, (W//4, H//4))
             plant_detector.detect(cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB))
 
-            THRESHOLD = 0.5
+            THRESHOLD = 0.2
 
             for i in range(plant_detector.detections['detection_boxes'].shape[0]):
                 if plant_detector.detections['detection_scores'][i] > THRESHOLD:
