@@ -8,6 +8,7 @@ VIDEO_WIDTH = 640
 
 SKIP_FRAMES = False
 
-DETECTION_MODEL = '/home/lukas/coding/TensorFlow/workspace/object_detection_640x640_v4/exported-models/my_model/saved_model'
+#DETECTION_MODEL = '/home/lukas/coding/TensorFlow/workspace/object_detection_640x640_v4/exported-models/my_model/saved_model'
+DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210525_141611/inference_graph/saved_model'
 DETECTION_CATEGORIES = '/home/lukas/coding/TensorFlow/workspace/object_detection_640x640_v4/annotations/label_map.pbtxt'
 
