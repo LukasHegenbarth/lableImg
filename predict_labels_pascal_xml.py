@@ -75,7 +75,7 @@ if __name__=="__main__":
             ElementTree.SubElement(annotation, 'segmented').text = str(0)
             
             resized_img = cv2.resize(img, (W//4, H//4))
-            plant_detector.detect(cv2.cvtColor(resized_img, cv2.COLOR_BGR2RGB))
+            plant_detector.detect(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
             THRESHOLD = 0.2
 
