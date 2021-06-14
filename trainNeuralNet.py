@@ -9,6 +9,7 @@ import sys
 from collections import defaultdict
 from functools import partial
 import datetime
+import time
 
 import tensorflow as tf
 from google.protobuf import text_format
@@ -258,6 +259,7 @@ class stackedWindow(QWidget):
         self.configs.train_config.batch_size = int(self.batchSize.text())
         self.configs.train_config.optimizer.momentum_optimizer.learning_rate.cosine_decay_learning_rate.learning_rate_base = float(self.learningRate.text())
         self.configs.train_config.optimizer.momentum_optimizer.learning_rate.cosine_decay_learning_rate.warmup_learning_rate = float(self.warmupLearningRate.text())
+        self.configs.train_config.num_steps = int(self.totalSteps.text())
         self.configs.train_config.optimizer.momentum_optimizer.learning_rate.cosine_decay_learning_rate.total_steps = int(self.totalSteps.text())
         self.configs.train_config.optimizer.momentum_optimizer.learning_rate.cosine_decay_learning_rate.warmup_steps = int(self.warmupSteps.text())
         for data in self.trainingData.currentData():
@@ -279,6 +281,10 @@ class stackedWindow(QWidget):
         self.training_sp = subprocess.Popen([python_string], shell=True)
         logdir = os.path.join(session_path, 'train')
         self.tensorboard_sp = subprocess.Popen(['tensorboard', '--logdir', session_path])
+        # wait 100 seconds until training is started
+        time.sleep(3)
+        self.eval_sp = subprocess.Popen(['CUDA_VISIBLE_DEVICES=-1' +' python3 /home/lukas/training_workspace/model_main_tf2.py --model_dir=' + session_path + ' --pipeline_config_path=' + config_path + ' --checkpoint_dir=' + session_path], shell=True)
+
         # self.terminalOutput = QTextEdit(self)
         # self.terminalOutput.setMaximumWidth(410)
         # self.terminalOutput.setMaximumHeight(500)
