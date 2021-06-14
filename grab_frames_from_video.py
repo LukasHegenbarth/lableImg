@@ -2,6 +2,7 @@ import cv2
 import argparse
 import os
 from pathlib import Path
+import glob
 
 # TODO make user input: sample rate in images per second
 # TODO get frame rate from video to calculate framerate
@@ -9,12 +10,17 @@ from pathlib import Path
 def arg_parser():
     desc = "divide video in frames"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('-v', '--video', type=str, default=None, required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-v', '--video', type=str, default=None)
+    group.add_argument('-f', '--folder', type=str, default=None)
     parser.add_argument('-r', '--imgs_per_second', type=float, default=1.0, required=False)
     return check_args(parser.parse_args())
 
 def check_args(args):
-    check_path(args.video)
+    if args.video:
+        check_path(args.video)
+    if args.folder:
+        check_path(args.folder)
     return args
 
 
@@ -26,24 +32,55 @@ def check_path(path):
 
 if __name__ == "__main__":
     args = arg_parser()
-    outdir = args.video.split('.')[0]
-    os.mkdir(outdir)
+    if args.video:
+        outdir = args.video.split('.')[0]
+        os.mkdir(outdir)
 
-    rate = int(30/args.imgs_per_second)
-    print("saving {} frames per second".format(args.imgs_per_second))
-    cap = cv2.VideoCapture(args.video)
-    frame_id = 0
+        rate = int(30/args.imgs_per_second)
+        print("saving {} frames per second".format(args.imgs_per_second))
+        cap = cv2.VideoCapture(args.video)
+        frame_id = 0
 
-    while cap.isOpened():
-        ok, frame = cap.read()
-        
-        if not ok:
-            print("Can't process frame. Exiting...")
-            break
-        
-        #save frame every 10 seconds
-        if frame_id % rate == 0:
-            cv2.imwrite(outdir + '/' + str(frame_id//rate) + '.jpg', frame)
+        while cap.isOpened():
+            ok, frame = cap.read()
+            
+            if not ok:
+                print("Can't process frame. Exiting...")
+                break
+            
+            #save frame every 10 seconds
+            if frame_id % rate == 0:
+                cv2.imwrite(outdir + '/' + str(frame_id//rate) + '.jpg', frame)
 
 
-        frame_id += 1
+            frame_id += 1
+    
+    if args.folder:
+        print(args.folder)
+        videos = glob.glob(args.folder + '*camera_1.mkv')
+        for video in videos:
+            outdir = video.split('.')[0]
+            if os.path.exists(outdir):
+                print('Video has already been processed. Folder exists.')
+            else:
+                os.mkdir(outdir)
+
+                rate = int(30/args.imgs_per_second)
+                print("saving {} frames per second".format(args.imgs_per_second))
+
+                cap = cv2.VideoCapture(video)
+                frame_id = 0
+
+                while cap.isOpened():
+                    ok, frame = cap.read()
+                    
+                    if not ok:
+                        print("Can't process frame. Exiting...")
+                        break
+                    
+                    #save frame every 10 seconds
+                    if frame_id % rate == 0:
+                        cv2.imwrite(outdir + '/' + str(frame_id//rate) + '.jpg', frame)
+
+
+                    frame_id += 1
