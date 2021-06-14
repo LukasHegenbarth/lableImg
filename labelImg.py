@@ -8,6 +8,7 @@ import platform
 import re
 import sys
 import subprocess
+from create_pascal_tf_record import convert_folder_to_tfrecord
 
 from functools import partial
 from collections import defaultdict
@@ -232,7 +233,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Actions
         action = partial(newAction, self)
 
-        predictLabels = action('Predict Labels', self.on_click,
+        predictLabels = action('Predict Labels', self.predict_labels_function,
                       'Ctrl+Shift+P', 'predictLabels', 'predictLabels')
 
         createTfRecord = action('Create TfRecord File', self.on_click, 
@@ -789,6 +790,16 @@ class MainWindow(QMainWindow, WindowMixin):
     #custom action
     def on_click(self):
         print('PyQt5 button click')
+    
+    #quick draft to predict labels of opened folder
+    def predict_labels_function(self):
+        print("predict labels")
+        print(self.lastOpenDir)
+        filename = os.path.basename(self.lastOpenDir)
+        print(filename)
+        
+        
+
 
     # React to canvas signals.
     def shapeSelectionChanged(self, selected=False):
