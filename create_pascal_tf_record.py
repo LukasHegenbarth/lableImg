@@ -65,6 +65,7 @@ def dict_to_tf_example(
     dataset_directory,
     label_map_dict,
     ignore_difficult_instances=False,
+    ignore_weed_instances=False,
 ):
     """Convert XML derived dict to tf.Example proto.
 
@@ -116,6 +117,9 @@ def dict_to_tf_example(
             if ignore_difficult_instances and difficult:
                 continue
 
+            if ignore_weed_instances and obj['name']=='weed':
+                continue
+
             difficult_obj.append(int(difficult))
 
             xmin.append(float(obj['bndbox']['xmin']) / width)
@@ -150,14 +154,15 @@ def dict_to_tf_example(
 
 
 def convert_folder_to_tfrecord(data_directory, sets, label_map_path,
-                               output_path):
+                               output_path, ignore_weed=False):
     writer = tf.python_io.TFRecordWriter(output_path)
 
     label_map_dict = label_map_util.get_label_map_dict(label_map_path)
 
     logging.info('Reading from folder %s dataset.', data_directory)
-    xml_list = glob.glob(data_directory + '/*.xml')
 
+    xml_list = glob.glob(data_directory + '/*.xml')
+    
     for idx, example in enumerate(xml_list):
         if idx % 100 == 0:
             logging.info('On image %d of %d', idx, len(xml_list))
@@ -167,7 +172,7 @@ def convert_folder_to_tfrecord(data_directory, sets, label_map_path,
         xml = etree.fromstring(xml_str)
         data = dataset_util.recursive_parse_xml_to_dict(xml)['annotation']
 
-        tf_example = dict_to_tf_example(data, data_directory, label_map_dict)
+        tf_example = dict_to_tf_example(data, data_directory, label_map_dict, ignore_weed_instances=ignore_weed)
 
         writer.write(tf_example.SerializeToString())
 
