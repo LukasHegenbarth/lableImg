@@ -12,7 +12,10 @@ SKIP_FRAMES = False
 #DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210525_141611/inference_graph/saved_model'
 #DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210528_134627/inference_graph/saved_model'
 #DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210605_001202/inference_graph/saved_model'
-DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210611_183407/inference_graph/saved_model'
+#DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210611_183407/inference_graph/saved_model'
+#DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210704_203325/inference_graph/saved_model'
+DETECTION_MODEL = '/home/lukas/training_workspace/training/beet/sessions/20210707_124201/inference_graph/saved_model'
 
-DETECTION_CATEGORIES = '/home/lukas/coding/TensorFlow/workspace/object_detection_640x640_v4/annotations/label_map.pbtxt'
+DETECTION_CATEGORIES = '/home/lukas/training_workspace/data/beet/beet_only_label_map.pbtxt'
+#DETECTION_CATEGORIES = '/home/lukas/coding/TensorFlow/workspace/object_detection_640x640_v4/annotations/beet_label_map.pbtxt'
 
