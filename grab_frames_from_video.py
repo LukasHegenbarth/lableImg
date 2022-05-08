@@ -49,10 +49,10 @@ if __name__ == "__main__":
                 break
             
             #save frame every 10 seconds
+            filename = f'{outdir}/{frame_id:05d}.jpg'
             if frame_id % rate == 0:
-                cv2.imwrite(outdir + '/' + str(frame_id//rate) + '.jpg', frame)
-
-
+                cv2.imwrite(filename, frame)
+            
             frame_id += 1
     
     if args.folder:
