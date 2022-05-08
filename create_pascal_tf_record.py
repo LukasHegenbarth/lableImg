@@ -120,6 +120,9 @@ def dict_to_tf_example(
             if ignore_weed_instances and obj['name']=='weed':
                 continue
 
+            if obj['name']=='beet':
+                continue
+
             difficult_obj.append(int(difficult))
 
             xmin.append(float(obj['bndbox']['xmin']) / width)
